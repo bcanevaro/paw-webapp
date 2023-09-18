@@ -4,9 +4,16 @@ public class User {
     private final String email;
     private String password;
 
-    public User(final String email, final String password){
+    private int id;
+
+    public User(final String email, final String password, final int id){
         this.email = email;
         this.password = password;
+        this.id = id;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getPassword() {

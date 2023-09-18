@@ -2,15 +2,18 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.models.User;
 import ar.edu.itba.paw.services.UserService;
+import ar.edu.itba.paw.webapp.exceptions.UserNotFoundException;
+import ar.edu.itba.paw.webapp.form.UserForm;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.function.Supplier;
 
 @Controller
 public class HelloWorldController {
@@ -25,8 +28,22 @@ public class HelloWorldController {
     @RequestMapping("/")
     public ModelAndView helloWorld() {
         final ModelAndView mav = new ModelAndView("helloworld/index");
-        mav.addObject("user", us.createUser("paw@itba.edu.ar","mysecret"));
+        mav.addObject("user", us.createUser("paw@itba.edu.ar","mysecret",0));
         return mav;
+    }
+
+    //con esta anotación (exception handler), generamos la página que le aparecerá al usuario al encontrarse con el problema
+    @ExceptionHandler(UserNotFoundException.class)
+    @ResponseStatus(code = HttpStatus.NOT_FOUND)
+    public ModelAndView noSuchUser(){
+        return new ModelAndView("404");
+    }
+
+    public ModelAndView index(@RequestParam(value = "userId",required = true) final long id){
+        final ModelAndView mav = new ModelAndView("index");
+        mav.addObject("user",us.findById(id).orElseThrow(UserNotFoundException::new));
+        return mav;
+
     }
 
     @RequestMapping("/{id:\\d+}")
@@ -37,16 +54,21 @@ public class HelloWorldController {
     }
 
     @RequestMapping(value = "/register",method = RequestMethod.POST)
-    public ModelAndView register(@RequestParam(value = "email",required = true) final String email,
-                                 @RequestParam(value = "password",required = true) final String password){
-        final User user = us.createUser(email,password);
-        final ModelAndView mav = new ModelAndView("helloworld/index");
-        mav.addObject("user", user);
-        return mav;
+    public ModelAndView register(@Valid @ModelAttribute("userForm") final UserForm userForm, final BindingResult errors){
+        if(errors.hasErrors()){
+            return registerForm(userForm);
+        }
+        final User u = us.createUser(userForm.getName(),userForm.getPassword(),0);
+        return new ModelAndView("redirect:/?userId="+u.getId());
     }
 
-    @RequestMapping(value = "/register",method = RequestMethod.GET)
-    public ModelAndView registerForm(){
-        return new ModelAndView("helloworld/register");
+    @RequestMapping("/register")
+    public ModelAndView registerForm(@ModelAttribute("userForm") final UserForm userForm){
+        return new ModelAndView("register");
+    }
+
+    @ModelAttribute("loggedUser")
+    public User getLoggedUser(){
+        return new User("Test User","secret",1);
     }
 }

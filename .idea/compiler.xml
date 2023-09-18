@@ -7,11 +7,11 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="webapp" />
+        <module name="models" />
+        <module name="persistence" />
+        <module name="interfaces" />
+        <module name="services" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="paw-webapp" target="1.8" />
-      <module name="webapp" target="1.8" />
-    </bytecodeTargetLevel>
   </component>
 </project>
